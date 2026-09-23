@@ -1,7 +1,0 @@
-.env
-*.token
-*.key
-*.pem
-evidence/private/
-.DS_Store
-EOF

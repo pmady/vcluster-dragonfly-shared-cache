@@ -1,0 +1,76 @@
+# Example run manifest.
+# Copy to a real run file (for example evidence/processed/<run-id>-manifest.yaml)
+# and fill in the observed values. Do not place actual credentials in this file.
+# Leave a value empty or null until it is supported by an evidence file.
+
+run:
+  id:
+  date_utc:
+  operator:
+  status:
+
+host:
+  operating_system:
+  architecture:
+  cpu:
+  memory:
+  cluster_type:
+  kind_version:
+  kubernetes_version:
+  node_count:
+  worker_nodes:
+
+dragonfly:
+  application_version:
+  helm_chart_version:
+  namespace:
+  manager_image:
+  scheduler_image:
+  client_image:
+  proxy_method:
+  cache_directory:
+  cache_capacity:
+
+vcluster:
+  cli_version:
+  tenant_a_server_version:
+  tenant_b_server_version:
+  tenant_a_context:
+  tenant_b_context:
+  sync_settings:
+
+model:
+  provider:
+  repository:
+  revision:
+  files:
+  approximate_size:
+  gated:
+  token_required:
+
+tenant_a:
+  host_node:
+  local_cache_initial_state:
+  start_utc:
+  end_utc:
+  checksum:
+  origin_evidence_file:
+  peer_evidence_file:
+
+tenant_b:
+  host_node:
+  local_cache_initial_state:
+  start_utc:
+  end_utc:
+  checksum:
+  origin_evidence_file:
+  peer_evidence_file:
+
+limitations:
+  gpu_tested:
+  network_policy_tested:
+  eviction_tested:
+  cache_pressure_tested:
+  private_model_tested:
+  hostile_tenant_tested:
+  notes:
