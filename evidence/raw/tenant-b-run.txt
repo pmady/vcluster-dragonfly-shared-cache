@@ -1,0 +1,17 @@
+$ kubectl cordon dragonfly-host-control-plane
+$ /tmp/run-tenant.sh vcluster_tenant-b_tenant-b_kind-dragonfly-host tenant-b
+$ kubectl uncordon dragonfly-host-control-plane
+===== tenant-b =====
+start=2026-09-26T07:00:15Z
+proxy=http://172.18.0.3:4001
+end=2026-09-26T07:00:18Z
+-rw-r--r--    1 curl_user users    267954768 Sep 26 07:00 /work/model.out
+5e3f1108e3cb34ee048634875d8482665b65ac713291a7e32396fb18f6ff0063  /work/model.out
+
+--- host placement ---
+NAME               READY   STATUS      RESTARTS   AGE   IP           NODE
+model-pull-9n58t   0/1     Completed   0          23s   10.244.2.5   dragonfly-host-worker2
+
+Note: the control-plane was cordoned only to force tenant-b onto a different
+worker than tenant-a, so the reuse would cross nodes (peer) rather than hit a
+same-node cache. It was uncordoned immediately after.

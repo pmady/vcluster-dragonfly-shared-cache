@@ -1,41 +1,32 @@
 # Evidence Matrix
 
-Every factual claim in the article maps to a row here. A claim may be published
-only when its evidence files exist and its status is marked ready. Unknown
-factual fields start as `[NEED: ...]`.
+Every claim below is backed by a file under `evidence/`. Result classification:
+remote-peer delivery. Run date: 2026-09-26 (UTC).
 
-Status values:
+## The five claims
 
-- `open`: no evidence yet.
-- `partial`: some evidence, not enough to publish the claim.
-- `ready`: evidence is complete and the publication wording is settled.
+| Claim | Evidence | File | Status |
+| --- | --- | --- | --- |
+| Dragonfly is platform-owned | Scheduler, seed peers, and client DaemonSet run on the host; client on hostNetwork; manager-less mode | evidence/raw/host-components.txt | ready |
+| Tenants use separate vClusters | Two contexts, each with its own namespaces; tenant API server v1.36.0 vs host v1.37.0 | evidence/raw/tenant-contexts.txt | ready |
+| Tenant Jobs lack node-level privileges | Job runs runAsNonRoot, drops all capabilities, no hostPath/hostNetwork/hostPID/hostIPC/privileged | workloads/model-pull-job.yaml, evidence/raw/tenant-a-run.txt | ready |
+| Tenant B did not repeat the origin path | Same task_id; tenant-b collected pieces from peer parents; control-plane client sent cached pieces to tenant-b's node; no origin back-to-source | evidence/raw/tenant-b-dfdaemon.log, evidence/raw/tenant-a-dfdaemon.log | ready |
+| Both tenants received the same artifact | Identical SHA-256 5e3f1108...f0063 and size 267954768 | evidence/raw/tenant-a-run.txt, evidence/raw/tenant-b-run.txt | ready |
 
-| Claim or observation | tenant-a evidence | tenant-b evidence | Dragonfly evidence | Source file | Status | Publication wording |
-| --- | --- | --- | --- | --- | --- | --- |
-| Run date | not applicable | not applicable | not applicable | `[NEED: source file]` | open | `[NEED: run date, UTC]` |
-| Host cluster type | not applicable | not applicable | not applicable | `[NEED: source file]` | open | `[NEED: cluster type, expected disposable kind]` |
-| Kubernetes version | not applicable | not applicable | not applicable | `[NEED: source file]` | open | `[NEED: kubernetes version]` |
-| Node topology | not applicable | not applicable | not applicable | `[NEED: source file]` | open | `[NEED: node count and roles]` |
-| Dragonfly version | not applicable | not applicable | `[NEED: version evidence]` | `[NEED: source file]` | open | `[NEED: dragonfly application version]` |
-| Dragonfly chart version | not applicable | not applicable | `[NEED: chart evidence]` | `[NEED: source file]` | open | `[NEED: dragonfly helm chart version]` |
-| vCluster version | not applicable | not applicable | not applicable | `[NEED: source file]` | open | `[NEED: vcluster cli and server version]` |
-| Tenant contexts | `[NEED: tenant-a context evidence]` | `[NEED: tenant-b context evidence]` | not applicable | `[NEED: source file]` | open | `[NEED: two distinct context names]` |
-| Host-node placement | `[NEED: tenant-a host node]` | `[NEED: tenant-b host node]` | not applicable | `[NEED: source file]` | open | `[NEED: node placement for both Jobs]` |
-| Model repository | `[NEED: request evidence]` | `[NEED: request evidence]` | `[NEED: task evidence]` | `[NEED: source file]` | open | `[NEED: model repository]` |
-| Model revision | `[NEED: request evidence]` | `[NEED: request evidence]` | `[NEED: task evidence]` | `[NEED: source file]` | open | `[NEED: immutable revision]` |
-| Requested file | `[NEED: request evidence]` | `[NEED: request evidence]` | `[NEED: task evidence]` | `[NEED: source file]` | open | `[NEED: requested file name]` |
-| Artifact size | `[NEED: size evidence]` | `[NEED: size evidence]` | `[NEED: task evidence]` | `[NEED: source file]` | open | `[NEED: artifact size]` |
-| Cache state before tenant-a | not applicable | not applicable | `[NEED: empty-cache evidence]` | `[NEED: source file]` | open | `[NEED: cache empty before first run]` |
-| Cache state before tenant-b | not applicable | not applicable | `[NEED: cache-populated evidence]` | `[NEED: source file]` | open | `[NEED: cache holds artifact before second run]` |
-| Origin traffic | `[NEED: tenant-a origin evidence]` | `[NEED: tenant-b origin evidence]` | `[NEED: origin task record]` | `[NEED: source file]` | open | `[NEED: which run fetched from origin]` |
-| Local-cache traffic | `[NEED: tenant-a cache evidence]` | `[NEED: tenant-b cache evidence]` | `[NEED: cache task record]` | `[NEED: source file]` | open | `[NEED: which run used local cache]` |
-| Remote-peer traffic | `[NEED: tenant-a peer evidence]` | `[NEED: tenant-b peer evidence]` | `[NEED: peer task record]` | `[NEED: source file]` | open | `[NEED: which run used a remote peer]` |
-| Start timestamp | `[NEED: tenant-a start]` | `[NEED: tenant-b start]` | not applicable | `[NEED: source file]` | open | `[NEED: UTC start per run]` |
-| End timestamp | `[NEED: tenant-a end]` | `[NEED: tenant-b end]` | not applicable | `[NEED: source file]` | open | `[NEED: UTC end per run]` |
-| Checksum | `[NEED: tenant-a checksum]` | `[NEED: tenant-b checksum]` | not applicable | `[NEED: source file]` | open | `[NEED: matching checksum statement]` |
-| Job security context | `[NEED: tenant-a securityContext]` | `[NEED: tenant-b securityContext]` | not applicable | `[NEED: source file]` | open | `[NEED: security context summary]` |
-| hostPath absence | `[NEED: tenant-a manifest evidence]` | `[NEED: tenant-b manifest evidence]` | not applicable | `[NEED: source file]` | open | `[NEED: hostPath not present]` |
-| hostNetwork absence | `[NEED: tenant-a manifest evidence]` | `[NEED: tenant-b manifest evidence]` | not applicable | `[NEED: source file]` | open | `[NEED: hostNetwork not present]` |
-| Privileged-mode absence | `[NEED: tenant-a manifest evidence]` | `[NEED: tenant-b manifest evidence]` | not applicable | `[NEED: source file]` | open | `[NEED: privileged mode not present]` |
-| Tested limitations | not applicable | not applicable | not applicable | `[NEED: source file]` | open | `[NEED: what was actually tested]` |
-| Untested limitations | not applicable | not applicable | not applicable | `[NEED: source file]` | open | `[NEED: what was not tested]` |
+## Key facts
+
+| Field | Value |
+| --- | --- |
+| Host cluster | disposable kind, Kubernetes v1.37.0, 3 nodes |
+| Dragonfly | chart 1.8.5, app 2.5.2, client v1.5.5, manager-less |
+| vCluster | CLI 0.37.2, tenant server v1.36.0 |
+| Model | distilbert-base-uncased @ 12040accade4e8a0f71eabdb258fecc2e7e948be, model.safetensors, 267954768 bytes |
+| Dragonfly task_id | c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7 |
+| tenant-a node / source | dragonfly-host-control-plane / origin via seed peer |
+| tenant-b node / source | dragonfly-host-worker2 / remote peer (control-plane client + seed) |
+
+## Not tested
+
+GPU, NetworkPolicy, cache eviction, cache pressure, private or gated models,
+failure injection, hostile-tenant isolation. Wall-clock timing is observational,
+not a benchmark.

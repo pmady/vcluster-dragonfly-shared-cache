@@ -1,0 +1,22 @@
+# Dragonfly client (dfdaemon) log excerpt for the tenant-a cold run.
+# Source: kubectl -n dragonfly-system logs -l app=dragonfly,component=client
+# Signed CDN query strings after "?" are redacted as <signed-query-redacted>.
+# Node: dragonfly-host-control-plane (pod dragonfly-client-q98bf).
+
+2026-09-26T06:56:50.101360Z INFO proxy/mod.rs:467: proxy HTTP request via dfdaemon by rule config: Request { method: GET, uri: http://us.aws.cdn.hf.co/xet-bridge-us/621ffdc036468d709f174347/22f1240b5c3e6c4d5c19fe96c68b0600fca5743fba2460882dddac50aca607d8?<signed-query-redacted>, headers: {"host": "us.aws.cdn.hf.co", "user-agent": "curl/8.22.0"} }
+
+2026-09-26T06:56:50.102228Z INFO proxy/task.rs:125: download task started: url="https://us.aws.cdn.hf.co/xet-bridge-us/621ffdc036468d709f174347/22f1240b...?<signed-query-redacted>" remote_ip=10.244.0.14 host_id="172.18.0.4-dragonfly-host-control-plane" task_id="c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7"
+
+2026-09-26T06:56:51.161389Z INFO resource/task.rs:475: interested pieces after downloading from local: [0..63] (64 pieces) content_length=267954768
+
+2026-09-26T06:56:51.161434Z INFO grpc/scheduler.rs:583: picked VNode { addr: 10.244.1.3:8002 } task_id="c8dca29..."
+
+2026-09-26T06:56:52.073656Z INFO resource/task.rs:831: normal task response: ["10.244.2.3-dragonfly-seed-client-0-...-seed"] task_id="c8dca29..."
+
+2026-09-26T06:57:00.178478Z INFO piece_collector.rs:392: all pieces are collected, abort all tasks task_id="c8dca29..."
+2026-09-26T06:57:00.187659Z INFO resource/task.rs:620: all pieces are downloaded with scheduler task_id="c8dca29..."
+
+# Interpretation: on the cold cache, the scheduler assigned the SEED PEER
+# (dragonfly-seed-client-0) as the source. The seed peer performed the origin
+# back-to-source to us.aws.cdn.hf.co, and tenant-a assembled the 64 pieces from
+# it. This is the origin path for the first request.

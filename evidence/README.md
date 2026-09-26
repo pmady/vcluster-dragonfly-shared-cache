@@ -40,3 +40,24 @@ evidence/processed/<run-id>-evidence-summary.md
 
 The exact run identifier comes from `evidence/run-manifest.example.yaml` once a
 real run exists.
+
+## v0.1 evidence checklist
+
+A v0.1 run is complete when these files exist and have been reviewed. Nothing
+else is required for the first contribution.
+
+- [ ] Host Dragonfly component listing (manager, scheduler, client pods).
+- [ ] tenant-a context output showing its own API server.
+- [ ] tenant-b context output showing its own API server.
+- [ ] Final tenant Job YAML as applied.
+- [ ] tenant-a logs.
+- [ ] tenant-b logs.
+- [ ] Dragonfly evidence of the origin download.
+- [ ] Dragonfly evidence of a local-cache hit or a remote-peer transfer.
+- [ ] Host-node placement of both tenant Jobs.
+- [ ] Matching SHA-256 checksums from both tenants.
+
+`scripts/collect-evidence.sh` gathers most of these into `evidence/raw`. Reading
+the Dragonfly logs to tell origin, local cache, and remote peer apart is a manual
+step. Do not mark the cache or peer item done without a log line or metric that
+names the source of the bytes.

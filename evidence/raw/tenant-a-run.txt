@@ -1,0 +1,11 @@
+$ /tmp/run-tenant.sh vcluster_tenant-a_tenant-a_kind-dragonfly-host tenant-a
+===== tenant-a =====
+start=2026-09-26T06:56:49Z
+proxy=http://172.18.0.4:4001
+end=2026-09-26T06:57:00Z
+-rw-r--r--    1 curl_user users    267954768 Sep 26 06:57 /work/model.out
+5e3f1108e3cb34ee048634875d8482665b65ac713291a7e32396fb18f6ff0063  /work/model.out
+
+--- host placement ---
+NAME               READY   STATUS      RESTARTS   AGE   IP            NODE
+model-pull-4989k   0/1     Completed   0          24s   10.244.0.14   dragonfly-host-control-plane

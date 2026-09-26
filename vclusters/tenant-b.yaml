@@ -1,0 +1,8 @@
+# Open source vCluster configuration for tenant-b.
+#
+# Used with: vcluster create tenant-b -n tenant-b --connect=false
+#
+# The recorded run used the default configuration (this file empty of overrides).
+# To observe remote-peer delivery, place the tenant-b Job on a different host
+# worker than tenant-a (the recorded run cordoned the node tenant-a used before
+# running tenant-b, then uncordoned it). Add keys here only if you need them.

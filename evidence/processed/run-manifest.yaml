@@ -1,0 +1,71 @@
+# Filled run manifest for the v0.1 run. Credential-free.
+
+run:
+  id: v0.1-2026-09-26
+  date_utc: "2026-09-26"
+  operator: pmady
+  status: complete
+  classification: remote-peer
+
+host:
+  operating_system: Ubuntu 22.04.1 LTS (KodeKloud playground)
+  architecture: amd64
+  cluster_type: disposable kind
+  kind_version: v0.34.0-alpha+dd00511b043a27
+  kubernetes_version: v1.37.0
+  node_count: 3
+  worker_nodes: dragonfly-host-worker, dragonfly-host-worker2 (control-plane also schedulable)
+
+dragonfly:
+  application_version: 2.5.2
+  helm_chart_version: 1.8.5
+  namespace: dragonfly-system
+  deployment_mode: manager-less (scheduler + seed peers + client DaemonSet)
+  client_image: docker.io/dragonflyoss/client:v1.5.5
+  proxy_method: HTTP proxy on the client DaemonSet, hostNetwork, port 4001
+  seed_client_replicas: 2
+
+vcluster:
+  cli_version: 0.37.2
+  tenant_a_server_version: v1.36.0
+  tenant_b_server_version: v1.36.0
+  tenant_a_context: vcluster_tenant-a_tenant-a_kind-dragonfly-host
+  tenant_b_context: vcluster_tenant-b_tenant-b_kind-dragonfly-host
+
+model:
+  provider: huggingface
+  repository: distilbert-base-uncased
+  revision: 12040accade4e8a0f71eabdb258fecc2e7e948be
+  files: model.safetensors
+  approximate_size: 267954768 bytes
+  gated: false
+  token_required: false
+  cdn_host: us.aws.cdn.hf.co (Xet backend)
+
+tenant_a:
+  host_node: dragonfly-host-control-plane
+  start_utc: 2026-09-26T06:56:49Z
+  end_utc: 2026-09-26T06:57:00Z
+  checksum: 5e3f1108e3cb34ee048634875d8482665b65ac713291a7e32396fb18f6ff0063
+  transfer_source: origin (seed peer back-to-source)
+  task_id: c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7
+
+tenant_b:
+  host_node: dragonfly-host-worker2
+  start_utc: 2026-09-26T07:00:15Z
+  end_utc: 2026-09-26T07:00:18Z
+  checksum: 5e3f1108e3cb34ee048634875d8482665b65ac713291a7e32396fb18f6ff0063
+  transfer_source: remote peer (control-plane client + seed peer)
+  task_id: c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7
+
+limitations:
+  gpu_tested: false
+  network_policy_tested: false
+  eviction_tested: false
+  cache_pressure_tested: false
+  private_model_tested: false
+  hostile_tenant_tested: false
+  notes: >
+    Single two-tenant run on a disposable kind cluster. Wall-clock timing is
+    observational only. The control-plane was cordoned only to place tenant-b on
+    a different worker, then uncordoned.

@@ -1,0 +1,29 @@
+# Two tenants on separate vCluster API servers (open source vCluster).
+# Source: kubectl config get-contexts, per-context get ns and version.
+
+TA_CTX=vcluster_tenant-a_tenant-a_kind-dragonfly-host
+TB_CTX=vcluster_tenant-b_tenant-b_kind-dragonfly-host
+
+# tenant-a namespaces (its own isolated control plane)
+$ kubectl --context "$TA_CTX" get ns
+NAME              STATUS   AGE
+default           Active   2m20s
+kube-node-lease   Active   2m20s
+kube-public       Active   2m20s
+kube-system       Active   2m20s
+
+# tenant-b namespaces (its own isolated control plane)
+$ kubectl --context "$TB_CTX" get ns
+NAME              STATUS   AGE
+default           Active   2m22s
+kube-node-lease   Active   2m22s
+kube-public       Active   2m22s
+kube-system       Active   2m22s
+
+# Version independence: the tenant API server runs a different Kubernetes
+# version than the host.
+# kubectl --context "$TA_CTX" version -o yaml | grep gitVersion
+gitVersion: v1.37.1   # client (kubectl)
+gitVersion: v1.36.0   # tenant vCluster API server
+
+# Host cluster (kind) runs Kubernetes v1.37.0.

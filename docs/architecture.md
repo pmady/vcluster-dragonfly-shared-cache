@@ -1,52 +1,51 @@
 # Architecture
 
-This document describes the layers in the lab and the boundaries between them.
-It states what the lab is designed to test and what it does not attempt to
-prove.
+This describes the layers in the lab and the boundaries between them, as run on
+2026-09-26. See [../evidence/processed/results.md](../evidence/processed/results.md)
+for the classified result.
 
 [FIGURE 1: host cluster, Dragonfly components, two vCluster API boundaries,
 tenant Jobs, peer path, and Hugging Face origin]
 
 ## Host layer
 
-A single disposable Kubernetes cluster runs on a laptop using kind. The host
-nodes are owned by the platform. Node count and topology are recorded in the
-evidence as `[NEED: node topology]`.
+One disposable kind cluster, Kubernetes v1.37.0, with one control-plane and two
+worker nodes. The host nodes are owned by the platform.
 
 ## Dragonfly platform layer
 
-Dragonfly runs only on the host cluster. The manager, scheduler, and client
-DaemonSet are platform-owned. The client cache lives on the host nodes at
-`[NEED: cache directory]` with capacity `[NEED: cache capacity]`. Tenants do not
-own or configure Dragonfly.
+Dragonfly runs only on the host cluster (chart 1.8.5, app 2.5.2) in manager-less
+mode: schedulers, seed peers, and a client (dfdaemon) DaemonSet. The client runs
+on hostNetwork and exposes an HTTP proxy on port 4001 on each node. The cache
+lives on the seed peers and clients on the host nodes. Tenants do not own or
+configure Dragonfly.
 
 ## vCluster control-plane layer
 
-Two open source vCluster control planes, tenant-a and tenant-b, run on the host
-cluster. Each has its own API server and its own kube context. A tenant sees its
-own control plane, not the host control plane.
+Two open source vClusters, tenant-a and tenant-b, run on the host cluster
+(vcluster CLI 0.37.2). Each has its own API server (v1.36.0) and its own kube
+context. A tenant sees its own control plane, not the host control plane.
 
 ## Tenant workload layer
 
-Each tenant runs an ordinary Kubernetes Job that requests the same pinned public
-model artifact. The Job must not receive hostPath, hostNetwork, privileged mode,
-hostPID, or hostIPC. The exact security context is recorded as
-`[NEED: Job security context]`.
+Each tenant runs the same Kubernetes Job requesting distilbert-base-uncased,
+revision 12040accade4e8a0f71eabdb258fecc2e7e948be, file model.safetensors. The
+Job reaches the node-local Dragonfly proxy through the downward-API host IP. It
+has no hostPath, hostNetwork, hostPID, hostIPC, or privileged container, runs as
+a non-root user, and drops all capabilities.
 
 ## Origin model hub
 
-The origin is the public Hugging Face model hub. The repository, revision, and
-file are recorded as `[NEED: model repository]`, `[NEED: model revision]`, and
-`[NEED: requested file]`. The chosen artifact is public and needs no access
-token.
+The origin is the public Hugging Face hub. The file is served from the Hugging
+Face Xet CDN (us.aws.cdn.hf.co). The artifact is public and needs no token.
 
 ## Ownership matrix
 
 | Component | Owner | Notes |
 | --- | --- | --- |
 | Host nodes | Platform | Disposable kind cluster |
-| Dragonfly manager, scheduler, client | Platform | Runs on host only |
-| Dragonfly cache | Platform | Lives on host nodes |
+| Dragonfly scheduler, seed peers, client | Platform | Host only, manager-less |
+| Dragonfly cache | Platform | On host nodes |
 | vCluster control planes | Platform provisions, tenant uses | Open source vCluster |
 | Tenant Job | Tenant | Ordinary Kubernetes Job |
 | Model artifact | Origin (Hugging Face) | Public, pinned by revision |
@@ -55,13 +54,12 @@ token.
 
 [FIGURE 2: ownership boundary between the platform team and tenants]
 
-1. tenant-a submits a Job that requests the artifact.
-2. The request reaches the platform-owned Dragonfly path.
-3. On a cold cache, Dragonfly fetches the artifact from the origin.
-4. The artifact is cached on the host.
-5. tenant-b later submits a Job that requests the same artifact.
-6. Dragonfly serves the second request from a local cache or a peer, or from the
-   origin. The actual source is determined only by evidence, not assumed here.
+1. tenant-a submits a Job that requests the artifact through the node-local proxy.
+2. On a cold cache, the scheduler assigns the seed peer, which fetches from the
+   origin and serves tenant-a. The task is registered under a stable task_id.
+3. tenant-b (on a different worker) submits the same request.
+4. The scheduler returns peer parents (the node that ran tenant-a, plus the seed
+   peer). tenant-b collects all pieces from those peers, with no origin fetch.
 
 ## Isolation boundaries
 
@@ -69,19 +67,13 @@ token.
 - Tenant Jobs run without node-level privileges.
 - Dragonfly configuration and cache are outside tenant control.
 
-## Claims that are not being made
+## Claims not made
 
-- The lab does not claim that tenant-b was served by a peer until an exact
-  Dragonfly log, metric, task record, or trace proves it.
-- The lab does not establish a security boundary against a hostile tenant unless
-  such testing is later supplied as evidence.
-- The lab does not claim a production benchmark. Laptop timing is supporting
-  information only.
+- No security boundary against a hostile tenant was tested.
+- No performance benchmark is claimed; laptop timing is observational.
 
 ## Alternatives
 
-- A per-node registry mirror or pull-through cache.
-- A shared PVC cache mounted into tenant workloads.
-
-This design was selected to test cross-tenant reuse while keeping cache
-ownership at the platform layer.
+A per-node registry mirror or pull-through cache, or a shared PVC cache mounted
+into tenant workloads. This design was chosen to test cross-tenant reuse while
+keeping cache ownership at the platform layer.

@@ -1,0 +1,77 @@
+# Model-pull Job. Applied unchanged in tenant-a and tenant-b.
+#
+# The run scripts substitute ${DOWNLOAD_IMAGE} and create a ConfigMap named
+# model-pull-config with the model coordinates and the Dragonfly proxy port.
+#
+# The Job resolves the Hugging Face file URL, rewrites the returned CDN URL from
+# https to http, and pulls it through the node-local Dragonfly HTTP proxy (found
+# via the downward-API host IP). Dragonfly re-adds TLS upstream and caches the
+# object, so a second tenant can be served from a peer or the local cache.
+#
+# It does not use hostPath, hostNetwork, hostPID, hostIPC, or privileged mode.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-pull
+  labels:
+    app: model-pull
+spec:
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: model-pull
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 100
+        fsGroup: 100
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: model-pull
+          image: ${DOWNLOAD_IMAGE}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            # Node-local Dragonfly proxy address (does not require hostNetwork on
+            # the tenant pod).
+            - name: DRAGONFLY_PROXY_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          envFrom:
+            # Supplies MODEL_REPOSITORY, MODEL_REVISION, MODEL_FILE, and
+            # DRAGONFLY_PROXY_PORT. Created by the run scripts.
+            - configMapRef:
+                name: model-pull-config
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              echo "start=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              resolve="https://huggingface.co/${MODEL_REPOSITORY}/resolve/${MODEL_REVISION}/${MODEL_FILE}"
+              final="$(curl -sI "$resolve" | awk 'tolower($1)=="location:"{print $2}' | tr -d '\r')"
+              [ -n "$final" ] || { echo "ERROR: no redirect (file is not LFS/Xet backed)"; exit 1; }
+              httpurl="$(printf '%s' "$final" | sed 's#^https://#http://#')"
+              echo "proxy=http://${DRAGONFLY_PROXY_HOST}:${DRAGONFLY_PROXY_PORT}"
+              curl -fsS -x "http://${DRAGONFLY_PROXY_HOST}:${DRAGONFLY_PROXY_PORT}" -o /work/model.out "$httpurl"
+              echo "end=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              ls -l /work/model.out
+              sha256sum /work/model.out
+          volumeMounts:
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: work
+          emptyDir: {}

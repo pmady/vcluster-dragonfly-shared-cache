@@ -1,0 +1,46 @@
+# Helm values for Dragonfly on the host cluster only (chart dragonfly-1.8.5,
+# app version 2.5.2). This is the exact configuration used in the recorded run.
+#
+# The chart deploys in manager-less mode: scheduler + seed peers + a client
+# (dfdaemon) DaemonSet. The client runs on hostNetwork so tenant pods can reach
+# its HTTP proxy at hostIP:4001.
+#
+# The proxy mirrors the Hugging Face Xet CDN and strips the signed query
+# parameters so the same content path yields a stable cache key across tenants.
+#
+# NOTE on the CDN host: Hugging Face serves this repo from its Xet CDN
+# (us.aws.cdn.hf.co). Confirm the redirect target for your file with:
+#   curl -sI "https://huggingface.co/<repo>/resolve/<rev>/<file>" | grep -i location
+# and set registryMirror.addr and the rule regex accordingly. Older repos still
+# on classic LFS redirect to cdn-lfs.huggingface.co with rule regex 'repos.*'.
+
+client:
+  # Dragonfly is platform-owned. hostNetwork lets the node-local proxy be reached
+  # by tenant pods via the downward-API host IP.
+  hostNetwork: true
+  config:
+    proxy:
+      server:
+        port: 4001
+      registryMirror:
+        addr: https://us.aws.cdn.hf.co
+      rules:
+        - regex: 'xet-bridge-us.*'
+          useTLS: true
+          # Strip the signed Xet query parameters so the cache key is the stable
+          # content path, letting the second tenant reuse the first tenant's task.
+          filteredQueryParams:
+            - response-content-disposition
+            - user_id
+            - X-Xet-Cas-Uid
+            - xip
+            - Expires
+            - Policy
+            - Signature
+            - Key-Pair-Id
+            - Hash-Algorithm
+
+# On a cluster with only two schedulable workers, scale the seed peers to match
+# so the release does not wait on an unschedulable third replica:
+#   kubectl -n dragonfly-system scale statefulset dragonfly-seed-client --replicas=2
+# (The recorded run used 2 seed peers.)
