@@ -1,4 +1,4 @@
-# Makefile for the vcluster-dragonfly-shared-cache scaffold.
+# Makefile for the vcluster-dragonfly-shared-cache tutorial.
 #
 # Targets use only standard Unix tools. shellcheck, yq, jq, and Python packages
 # are not required.
@@ -20,7 +20,7 @@ check:
 	@echo "==> check-no-secrets"
 	@bash scripts/check-no-secrets.sh .
 	@echo "==> check-article-style"
-	@bash scripts/check-article-style.sh article/draft.md
+	@bash scripts/check-article-style.sh README.md
 	@echo "==> git diff --check"
 	@git diff --check
 	@echo "all checks passed"

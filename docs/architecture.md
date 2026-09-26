@@ -2,10 +2,7 @@
 
 This describes the layers in the lab and the boundaries between them, as run on
 2026-09-26. See [../evidence/processed/results.md](../evidence/processed/results.md)
-for the classified result.
-
-[FIGURE 1: host cluster, Dragonfly components, two vCluster API boundaries,
-tenant Jobs, peer path, and Hugging Face origin]
+for the classified result. See the README for an architecture diagram.
 
 ## Host layer
 
@@ -51,8 +48,6 @@ Face Xet CDN (us.aws.cdn.hf.co). The artifact is public and needs no token.
 | Model artifact | Origin (Hugging Face) | Public, pinned by revision |
 
 ## Data-flow sequence
-
-[FIGURE 2: ownership boundary between the platform team and tenants]
 
 1. tenant-a submits a Job that requests the artifact through the node-local proxy.
 2. On a cold cache, the scheduler assigns the seed peer, which fetches from the

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Describe the change and the evidence it adds or the scaffold it improves.
+Describe the change and the evidence it adds or the tutorial it improves.
 
 ## Checklist
 
@@ -12,9 +12,9 @@ Describe the change and the evidence it adds or the scaffold it improves.
 - [ ] No enterprise-only material is included.
 - [ ] No private Slack or email content is included.
 - [ ] All versions are pinned where known.
-- [ ] `[NEED: ...]` placeholders remain for facts that are still unknown.
+- [ ] No unresolved placeholders remain in published or runnable files.
 - [ ] Scripts pass `bash -n`.
 - [ ] `make check` passes.
-- [ ] The article has no em dash or en dash.
+- [ ] The README has no em dash or en dash.
 - [ ] Every published claim links to an evidence file.
 - [ ] Screenshots were reviewed for redaction.

@@ -1,7 +1,7 @@
 # Contributing
 
 This repository is evidence first. Contributions add reproducible lab evidence
-or improve the scaffold. They do not add unproven result claims.
+or improve the tutorial. They do not add unproven result claims.
 
 ## Evidence-first rules
 

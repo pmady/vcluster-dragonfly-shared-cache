@@ -1,7 +1,4 @@
-# Open source vCluster configuration for tenant-a.
-#
-# Used with: vcluster create tenant-a -n tenant-a --connect=false
-#
-# The recorded run used the default configuration (this file empty of overrides),
-# which is enough for the experiment. Add keys here only if you need them, and
-# validate them against your vcluster CLI version.
+# Open source vCluster values for tenant-a.
+# The recorded run used no overrides. Passed with: vcluster create ... -f this-file
+# Add keys here only if you need them, and validate them against your CLI version.
+{}

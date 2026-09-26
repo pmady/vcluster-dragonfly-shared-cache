@@ -1,0 +1,59 @@
+# The model-pull Job as applied in tenant-a during the recorded run.
+# The run used image curlimages/curl:latest, which resolved to curl/8.22.0 (see
+# the tenant-a-run.txt user agent). The committed workloads/model-pull-job.yaml
+# now pins curlimages/curl:8.22.0 for reproducibility. This file shows the applied
+# spec; runtime status fields are omitted.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-pull
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 100
+        fsGroup: 100
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: model-pull
+          image: curlimages/curl:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: DRAGONFLY_PROXY_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          envFrom:
+            - configMapRef:
+                name: model-pull-config
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              echo "start=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              resolve="https://huggingface.co/${MODEL_REPOSITORY}/resolve/${MODEL_REVISION}/${MODEL_FILE}"
+              final="$(curl -sI "$resolve" | awk 'tolower($1)=="location:"{print $2}' | tr -d '\r')"
+              [ -n "$final" ] || { echo "ERROR: no redirect (not LFS)"; exit 1; }
+              httpurl="$(printf '%s' "$final" | sed 's#^https://#http://#')"
+              echo "proxy=http://${DRAGONFLY_PROXY_HOST}:${DRAGONFLY_PROXY_PORT}"
+              curl -fsS -x "http://${DRAGONFLY_PROXY_HOST}:${DRAGONFLY_PROXY_PORT}" -o /work/model.out "$httpurl"
+              echo "end=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              ls -l /work/model.out
+              sha256sum /work/model.out
+          volumeMounts:
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: work
+          emptyDir: {}
+# No hostPath, hostNetwork, hostPID, hostIPC, or privileged: node-level
+# privileges are absent (claim 3).

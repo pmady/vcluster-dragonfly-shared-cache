@@ -53,9 +53,10 @@ kubectl --context "$ctx" -n "$ns" delete job model-pull --ignore-not-found
 sed "s|\${DOWNLOAD_IMAGE}|$DOWNLOAD_IMAGE|g" "$job_manifest" \
   | kubectl --context "$ctx" -n "$ns" apply -f -
 
+job_failed=0
 if ! kubectl --context "$ctx" -n "$ns" wait --for=condition=complete \
      job/model-pull --timeout="$job_timeout"; then
-  echo "tenant-a: Job did not report complete within the timeout, capturing anyway" >&2
+  job_failed=1
 fi
 
 kubectl --context "$ctx" -n "$ns" get job model-pull -o yaml > "$out_dir/job.yaml"
@@ -65,4 +66,9 @@ kubectl --context "$ctx" -n "$ns" logs job/model-pull > "$out_dir/logs.txt" 2>&1
 echo "===== tenant-a ====="; cat "$out_dir/logs.txt"
 echo "--- host placement ---"; cat "$out_dir/pod.txt"
 grep -E '[0-9a-f]{64}' "$out_dir/logs.txt" || echo "WARNING: checksum not found, inspect $out_dir/logs.txt"
+
+if [ "$job_failed" -ne 0 ]; then
+  echo "error: model-pull Job did not complete in tenant-a" >&2
+  exit 1
+fi
 echo "tenant-a: done. Review files in $out_dir before committing."

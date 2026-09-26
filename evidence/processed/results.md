@@ -17,7 +17,7 @@ kind cluster. Result classification: **remote-peer delivery**.
 | Dragonfly task_id | c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7 | c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7 | evidence/raw/tenant-a-dfdaemon.log, tenant-b-dfdaemon.log |
 | Start (UTC) | 2026-09-26T06:56:49Z | 2026-09-26T07:00:15Z | evidence/raw/tenant-a-run.txt, tenant-b-run.txt |
 | End (UTC) | 2026-09-26T06:57:00Z | 2026-09-26T07:00:18Z | evidence/raw/tenant-a-run.txt, tenant-b-run.txt |
-| Transfer source | origin (via seed peer back-to-source) | remote peer (control-plane peer + seed peer) | evidence/raw/tenant-a-dfdaemon.log, tenant-b-dfdaemon.log |
+| Transfer source | origin (cold; served via the seed peer) | remote peer (control-plane peer + seed peer) | evidence/raw/tenant-a-dfdaemon.log, tenant-b-dfdaemon.log |
 | SHA-256 | 5e3f1108e3cb34ee048634875d8482665b65ac713291a7e32396fb18f6ff0063 | 5e3f1108e3cb34ee048634875d8482665b65ac713291a7e32396fb18f6ff0063 | evidence/raw/tenant-a-run.txt, tenant-b-run.txt |
 
 ## How the transfer source was classified
@@ -30,9 +30,13 @@ proxy filters the signed Xet query parameters, leaving a stable content path as
 the cache key.
 
 - tenant-a (cold): the scheduler's `normal task response` listed only the seed
-  peer (`dragonfly-seed-client-0`). The seed peer performed the origin
-  back-to-source to `us.aws.cdn.hf.co`, and tenant-a assembled the 64 pieces
-  from it.
+  peer (`dragonfly-seed-client-0`) as the source, and tenant-a assembled the 64
+  pieces from it. On a cold cache the seed peer is the component that fetches from
+  the origin, so this is the origin path for the first request. The seed peer's
+  own back-to-source log line to `us.aws.cdn.hf.co` was not captured in this
+  excerpt, and total origin bytes were not measured; the origin classification for
+  tenant-a is an inference from the cold cache plus the scheduler assigning the
+  seed as source.
 - tenant-b (second, on a different worker): the scheduler's `normal task
   response` listed two parents, the control-plane client (where tenant-a ran)
   and the seed peer. tenant-b collected all 64 pieces from those parents. There

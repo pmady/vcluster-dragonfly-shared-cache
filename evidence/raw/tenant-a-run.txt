@@ -9,3 +9,7 @@ end=2026-09-26T06:57:00Z
 --- host placement ---
 NAME               READY   STATUS      RESTARTS   AGE   IP            NODE
 model-pull-4989k   0/1     Completed   0          24s   10.244.0.14   dragonfly-host-control-plane
+
+Note: the recorded run used an inline helper (/tmp/run-tenant.sh). The committed
+scripts/run-tenant-a.sh reproduces the same steps: create the model-pull-config
+ConfigMap, apply workloads/model-pull-job.yaml, wait, and capture logs.
