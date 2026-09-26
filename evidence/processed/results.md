@@ -29,20 +29,22 @@ HTTP proxy on their local node (reached via the downward-API host IP on port
 proxy filters the signed Xet query parameters, leaving a stable content path as
 the cache key.
 
-- tenant-a (cold): the scheduler's `normal task response` listed only the seed
-  peer (`dragonfly-seed-client-0`) as the source, and tenant-a assembled the 64
-  pieces from it. On a cold cache the seed peer is the component that fetches from
-  the origin, so this is the origin path for the first request. The seed peer's
-  own back-to-source log line to `us.aws.cdn.hf.co` was not captured in this
-  excerpt, and total origin bytes were not measured; the origin classification for
-  tenant-a is an inference from the cold cache plus the scheduler assigning the
-  seed as source.
+- tenant-a (cold): the scheduler's `normal task response` listed the seed peer
+  (`dragonfly-seed-client-0`) as the source, and tenant-a assembled the 64 pieces
+  from it. The seed peer's own log confirms the origin fetch directly: with an
+  empty local cache it logged `need back to source response` for the task at
+  06:56:51 and fetched from `us.aws.cdn.hf.co`, then served the pieces to the
+  tenant-a node (`remote_host_id=...control-plane`). See
+  evidence/raw/seed-peer-dfdaemon.log. This is the origin download.
 - tenant-b (second, on a different worker): the scheduler's `normal task
   response` listed two parents, the control-plane client (where tenant-a ran)
-  and the seed peer. tenant-b collected all 64 pieces from those parents. There
-  is no origin back-to-source for tenant-b. On the control-plane client, the
-  log line `all existing pieces have been sent ... remote_host_id=<worker2>`
-  records that node serving its cached pieces to tenant-b's node.
+  and the seed peer. tenant-b collected all 64 pieces from those parents. On the
+  control-plane client, the log line `all existing pieces have been sent ...
+  remote_host_id=<worker2>` records that node serving its cached pieces to
+  tenant-b's node. The seed peer log shows the same for tenant-b's window
+  (`all existing pieces have been sent ... remote_host_id=<worker2>` at 07:00:15)
+  and contains no second `need back to source` line during that window. No
+  repeated origin fetch was observed for tenant-b.
 
 That combination (same task_id, parents are peers on other nodes, no origin
 back-to-source, and an explicit peer upload) is remote-peer delivery.

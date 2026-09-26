@@ -1,8 +1,9 @@
 # The model-pull Job as applied in tenant-a during the recorded run.
-# The run used image curlimages/curl:latest, which resolved to curl/8.22.0 (see
-# the tenant-a-run.txt user agent). The committed workloads/model-pull-job.yaml
-# now pins curlimages/curl:8.22.0 for reproducibility. This file shows the applied
-# spec; runtime status fields are omitted.
+# The run used image curlimages/curl:latest, which resolved to the digest
+# sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777
+# (curl/8.22.0). The committed workloads/model-pull-job.yaml now pins that digest
+# for reproducibility. This file shows the applied spec; runtime status fields are
+# omitted.
 apiVersion: batch/v1
 kind: Job
 metadata:

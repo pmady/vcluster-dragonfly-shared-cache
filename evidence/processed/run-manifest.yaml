@@ -27,6 +27,7 @@ dragonfly:
 
 vcluster:
   cli_version: 0.37.2
+  chart_version: 0.37.2
   tenant_a_server_version: v1.36.0
   tenant_b_server_version: v1.36.0
   tenant_a_context: vcluster_tenant-a_tenant-a_kind-dragonfly-host
@@ -42,12 +43,14 @@ model:
   token_required: false
   cdn_host: us.aws.cdn.hf.co (Xet backend)
 
+job_image: curlimages/curl@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777
+
 tenant_a:
   host_node: dragonfly-host-control-plane
   start_utc: 2026-09-26T06:56:49Z
   end_utc: 2026-09-26T06:57:00Z
   checksum: 5e3f1108e3cb34ee048634875d8482665b65ac713291a7e32396fb18f6ff0063
-  transfer_source: origin (seed peer back-to-source)
+  transfer_source: origin (seed peer logged need-back-to-source at 06:56:51)
   task_id: c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7
 
 tenant_b:

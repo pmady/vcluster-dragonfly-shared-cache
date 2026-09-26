@@ -6,18 +6,18 @@ This repository documents one complete, reproducible run. Two tenants on separat
 vCluster API servers requested the same pinned public Hugging Face model artifact
 through a platform-owned Dragonfly deployment.
 
-- tenant-a (cold, on the control-plane node): the scheduler assigned the seed
-  peer as the source, so Dragonfly fetched the model once and served tenant-a
-  from it.
+- tenant-a (cold, on the control-plane node): the seed peer logged a back-to-source
+  and fetched the model once from the origin, then served tenant-a.
 - tenant-b (second run, on a different worker): received the model pieces from a
-  remote Dragonfly peer under the same Dragonfly task id, with no origin fetch in
-  its window.
+  remote Dragonfly peer under the same Dragonfly task id, with no back-to-source
+  in its window.
 - Both tenants received an identical SHA-256 checksum.
 
-The captured logs prove remote-peer participation for the second tenant. This run
-did not independently measure total origin bytes or exclude every possible origin
-request. See [evidence/processed/results.md](evidence/processed/results.md) for the
-classified result and the exact log lines.
+The captured logs show a single origin back-to-source (during tenant-a) and none
+during tenant-b's window, plus remote-peer participation for tenant-b. This run
+did not perform a byte-level accounting of all traffic. See
+[evidence/processed/results.md](evidence/processed/results.md) for the classified
+result and the exact log lines.
 
 Note on scope: each Job also sends a small HEAD request to huggingface.co to
 resolve the file's CDN URL. The experiment concerns delivery of the 267954768
@@ -97,10 +97,10 @@ See [versions.env](versions.env). In the recorded run:
 - kind v0.34.0-alpha, node image kindest/node:v1.37.0, Kubernetes v1.37.0 (host)
 - kubectl v1.37.1, helm v3.22.0, docker 29.8.1
 - Dragonfly chart 1.8.5, app 2.5.2, client image v1.5.5
-- vcluster CLI 0.37.2, tenant API server v1.36.0
+- vcluster CLI 0.37.2, chart 0.37.2, tenant API server v1.36.0
 - Model: distilbert-base-uncased, revision 12040accade4e8a0f71eabdb258fecc2e7e948be,
   file model.safetensors (267954768 bytes), served from the Hugging Face Xet CDN
-- Job image: curlimages/curl:8.22.0
+- Job image: curlimages/curl@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777 (curl/8.22.0)
 
 ## Host cluster
 
@@ -143,16 +143,12 @@ hostNetwork.
 ## Creation of tenant-a and tenant-b
 
 ```bash
-vcluster create tenant-a -n tenant-a -f vclusters/tenant-a.yaml --connect=false
-vcluster create tenant-b -n tenant-b -f vclusters/tenant-b.yaml --connect=false
+vcluster create tenant-a -n tenant-a --chart-version 0.37.2 -f vclusters/tenant-a.yaml --connect=false
+vcluster create tenant-b -n tenant-b --chart-version 0.37.2 -f vclusters/tenant-b.yaml --connect=false
 vcluster connect tenant-a -n tenant-a --background-proxy
 vcluster connect tenant-b -n tenant-b --background-proxy
 kubectl config get-contexts -o name | grep vcluster
 ```
-
-The vcluster CLI version (0.37.2) determines the tenant chart it installs. To pin
-the chart explicitly, record the installed chart version and pass
-`--chart-version <version>` to `vcluster create`.
 
 Each context reaches its own API server (see
 [evidence/raw/tenant-contexts.txt](evidence/raw/tenant-contexts.txt)). The tenant
@@ -208,10 +204,12 @@ In the recorded run
 
 - Both tenants used the same task_id
   `c8dca2997b92a8a1c371703fb29ab83a2148a18213ed830f1c4fb944d53eb5d7`.
-- tenant-a's source was the seed peer.
+- tenant-a's source was the seed peer, which logged `need back to source response`
+  and fetched from the origin (see
+  [evidence/raw/seed-peer-dfdaemon.log](evidence/raw/seed-peer-dfdaemon.log)).
 - tenant-b's parents were the control-plane client and the seed peer; it
-  collected all 64 pieces from them, and the control-plane client logged sending
-  its cached pieces to tenant-b's node.
+  collected all 64 pieces from them, and both logged sending cached pieces to
+  tenant-b's node. No second back-to-source appears during tenant-b's window.
 
 ## Verify checksums
 
@@ -237,7 +235,8 @@ byte-identical artifact.
 ## What the result does not mean
 
 - It is not a performance benchmark. The timings are single observations.
-- It does not measure total origin bytes or exclude every origin request.
+- It does not perform a byte-level accounting of all traffic, though the logs show
+  one origin back-to-source (tenant-a) and none in tenant-b's window.
 - It does not show behavior under cache eviction, cache pressure, or node failure.
 - It does not test GPUs, private or gated models, or NetworkPolicy.
 - It does not establish isolation against a hostile tenant.
@@ -274,6 +273,7 @@ kind delete cluster --name dragonfly-host
 - [evidence/raw/tenant-contexts.txt](evidence/raw/tenant-contexts.txt): tenant API separation
 - [evidence/raw/tenant-a-run.txt](evidence/raw/tenant-a-run.txt), [evidence/raw/tenant-b-run.txt](evidence/raw/tenant-b-run.txt): Job runs
 - [evidence/raw/tenant-a-dfdaemon.log](evidence/raw/tenant-a-dfdaemon.log), [evidence/raw/tenant-b-dfdaemon.log](evidence/raw/tenant-b-dfdaemon.log): transfer-source evidence
+- [evidence/raw/seed-peer-dfdaemon.log](evidence/raw/seed-peer-dfdaemon.log): origin back-to-source (tenant-a) and no back-to-source (tenant-b)
 
 ## References
 
